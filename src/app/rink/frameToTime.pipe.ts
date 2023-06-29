@@ -1,5 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
+/**
+ * A Pipe to convert the frame count to seconds.
+ */
 @Pipe({
   name: 'frameToTime'
 })

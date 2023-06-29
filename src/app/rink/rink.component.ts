@@ -1,6 +1,9 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { GameSettings, Player } from '../app.component';
+import { Component, Input } from '@angular/core';
+import { Player } from '../app.component';
 
+/**
+ * A stateless component to render the rink and the timer.
+ */
 @Component({
   selector: 'app-rink',
   templateUrl: './rink.component.html',
