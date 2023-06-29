@@ -1,0 +1,40 @@
+.rink {
+    position: absolute;
+    background-color: skyblue;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 750px;
+    width: 1500px;
+    border-radius: 50px;
+}
+
+.bottomCover {
+    position: absolute;
+    height: 52px;
+    background-color: white;
+    left: 50%;
+    transform: translate(-50%, 100%);
+    z-index: 1;
+}
+
+.scoreboard {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    top: 50%;
+    left: 50%;
+    height: 100px;
+    background-color: grey;
+    border-radius: 50px 50px 0 0;
+
+    p {
+        color: white;
+        font-size: 1.6em;
+        font-weight: 600;
+        line-break: 100%;
+        transform: translateY(-85%);
+    }
+}
