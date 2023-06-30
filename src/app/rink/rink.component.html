@@ -4,11 +4,11 @@
 }">
     <p>{{frame | frameToTime}}</p>
 </div>
-<div class="rink" *ngFor="let player of players" [ngStyle]="{
+<div class="rink" [ngStyle]="{
     'width.px': rinkDimensions[0],
     'height.px': rinkDimensions[1]
 }">
-    <app-player [player]="player"></app-player>
+    <app-player *ngFor="let player of players" [player]="player"></app-player>
 </div>
 <div class="bottomCover" [ngStyle]="{
     'width.px': rinkDimensions[0],
