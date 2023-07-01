@@ -135,17 +135,18 @@ export class AppComponent implements OnInit {
 
       // Then velocity of the object from the forces being applied to the player.
       player.velocity = this.calcVelocity(player.velocity, player.force, player.mass);
-
-      // Then we'll check if the player is going to collide with anything based on their current movement.
-      // If so, then this will return a player object with an elastic collision performed.
-      player = this.checkCollisions(player);
-
-      // Updating the player's position.
-      player.position = this.calcPosition(player.position, player.velocity);
-
-      // Done.
       return player;
     });
+
+    // Then we'll check if the player is going to collide with anything based on their current movement.
+    // If so, then this will return a player object with an elastic collision performed.
+    this.players = this.checkCollisions();
+
+    this.players = this.players.map((player, i) => {
+      // Updating the player's position.
+      player.position = this.calcPosition(player.position, player.velocity);
+      return player
+    })
   }
 
   /**
@@ -210,31 +211,74 @@ export class AppComponent implements OnInit {
    * @param currentPlayer The player that is being check for collisions.
    * @returns The update player values.
    */
-  private checkCollisions(currentPlayer: Player): Player {
-    // Calculating the potential position if no collision occured.
-    const potentialPosition = this.calcPosition(currentPlayer.position, currentPlayer.velocity);
+  private checkCollisions(): Player[] {
+    const collisionsPerformed:[number, number][] = [];
 
-    // Checking for left and right wall collisions.
-    if (
-      potentialPosition[0] < currentPlayer.width/2 ||
-      potentialPosition[0] > this.gameSettings.rinkDimensions[0] - currentPlayer.width/2
-    ) {
-      currentPlayer.velocity[0] *= -this.gameSettings.bounceCoefficient;
-    }
+    const newPlayers = [...this.players];
 
-    // Checking for top and bottom wall collisions.
-    if (
-      potentialPosition[1] < 0 ||
-      potentialPosition[1] > this.gameSettings.rinkDimensions[1]
-    ) {
-      currentPlayer.velocity[1] *= -this.gameSettings.bounceCoefficient;
-    }
+    newPlayers.forEach((currentPlayer, i) => {
+      // Calculating the potential position if no collision occured.
+      const potentialPosition = this.calcPosition(currentPlayer.position, currentPlayer.velocity);
 
-    // Returning players values.
-    return currentPlayer;
+      // Checking for left and right wall collisions.
+      if (
+        potentialPosition[0] < currentPlayer.width/2 ||
+        potentialPosition[0] > this.gameSettings.rinkDimensions[0] - currentPlayer.width/2 ||
+        potentialPosition[1] < 0 ||
+        potentialPosition[1] > this.gameSettings.rinkDimensions[1]
+      ) {
+        currentPlayer.velocity = this.calcCollision({mass: currentPlayer.mass, velocityInitial: currentPlayer.velocity}, {mass:100, velocityInitial:[0,0]})[0];
+      }
+
+      this.players.forEach((player, j) => {
+        const player1Edges = {
+          top: currentPlayer.position[1] - (currentPlayer.width/2),
+          bottom: currentPlayer.position[1] + (currentPlayer.width/2),
+          left: currentPlayer.position[0] - (currentPlayer.width/2),
+          right: currentPlayer.position[0] + (currentPlayer.width/2)
+        }
+        const player2Edges = {
+          top: player.position[1] - (player.width/2),
+          bottom: player.position[1] + (player.width/2),
+          left: player.position[0] - (player.width/2),
+          right: player.position[0] + (player.width/2)
+        }
+
+        if (
+          player1Edges.left < player2Edges.right &&
+          player1Edges.right > player2Edges.left &&
+          player1Edges.top < player2Edges.bottom &&
+          player1Edges.bottom > player2Edges.top
+        ) {
+          const collidedVelocities = this.calcCollision(
+            {mass: currentPlayer.mass, velocityInitial: currentPlayer.velocity},
+            {mass: player.mass, velocityInitial: player.velocity}
+          );
+
+          newPlayers[i].velocity = collidedVelocities[0];
+          newPlayers[j].velocity = collidedVelocities[1];
+
+          collisionsPerformed.push([i, j]);
+        }
+      })
+    });
+
+    return newPlayers;
   }
 
-  private calcCollision(object1: {}) {
-    
+  private calcCollision(object1: {
+    mass: number,
+    velocityInitial:[number, number]
+  }, object2: {
+    mass: number,
+    velocityInitial: [number, number]
+  }): [[number, number], [number, number]] {
+    const finalVelocity1X = (((object1.mass - object2.mass) * object1.velocityInitial[0]) + (2 * object2.mass * object2.velocityInitial[0])) / (object1.mass + object2.mass);
+    const finalVelocity1Y = (((object1.mass - object2.mass) * object1.velocityInitial[1]) + (2 * object2.mass * object2.velocityInitial[1])) / (object1.mass + object2.mass);
+
+    const finalVelocity2X = (((object2.mass - object1.mass) * object2.velocityInitial[0]) + (2 * object1.mass * object1.velocityInitial[0])) / (object1.mass + object2.mass);
+    const finalVelocity2Y = (((object2.mass - object1.mass) * object2.velocityInitial[1]) + (2 * object1.mass * object1.velocityInitial[1])) / (object1.mass + object2.mass);
+
+    return [[finalVelocity1X, finalVelocity1Y], [finalVelocity2X, finalVelocity2Y]];
   }
 }
