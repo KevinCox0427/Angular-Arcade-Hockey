@@ -9,6 +9,7 @@ import { timer } from 'rxjs';
 type Player = {
   position: [number, number],
   velocity: [number, number],
+  acceleration: [number, number],
   force: [number, number],
   mass: number
   width: number
@@ -21,7 +22,7 @@ type GameSettings = {
   frictionCoefficient: number,
   rinkDimensions: [number, number],
   movementCoefficient: number,
-  maxMovement: number,
+  maxVelocity: number,
   bounceCoefficient: number
 }
 export type { Player, GameSettings }
@@ -44,10 +45,10 @@ export class AppComponent implements OnInit {
   gameTimer = timer(0, 1000/60);
   // Some values to adjust the game engine.
   gameSettings:GameSettings = {
-    frictionCoefficient: 0.003,
-    rinkDimensions: [1800, 800],
-    movementCoefficient: 0.02,
-    maxMovement: 0.5,
+    frictionCoefficient: 0.004,
+    rinkDimensions: [1250, 800],
+    movementCoefficient: 0.01,
+    maxVelocity: 2,
     bounceCoefficient: 0.6
   };
   // An array of the players.
@@ -56,6 +57,7 @@ export class AppComponent implements OnInit {
     {
       position: [500, 200],
       velocity: [0, 0],
+      acceleration: [0, 0],
       force: [0, 0],
       mass: 20,
       width: 70
@@ -63,18 +65,21 @@ export class AppComponent implements OnInit {
     {
       position: [500, 400],
       velocity: [0, 0],
+      acceleration: [0, 0],
       force: [0, 0],
       mass: 20,
       width: 70
     }
   ];
-  // A mutible object to keep track of what keys are being pressed.
+  // The index of the player that is currently being controlled.
+  selectedPlayer = 0;
+  // A keymap to keep track of what buttons the player has pressed
   keymap = {
-    w: false,
-    a: false,
-    s: false,
-    d: false
-  };
+    'w': false,
+    'a': false,
+    's': false,
+    'd': false
+  }
 
   constructor() {}
 
@@ -89,10 +94,11 @@ export class AppComponent implements OnInit {
 
   /**
    * Event listener on the body for when a key is pressed down.
-   * Only updates the keymap.
+   * Updates keymap and applies a force to the player
    */
   @HostListener('document:keydown', ['$event'])
   onKeyDown(ev: KeyboardEvent) {
+    // Updating keymap.
     if(ev.key === 'w') this.keymap.w = true;
     if(ev.key === 'a') this.keymap.a = true;
     if(ev.key === 's') this.keymap.s = true;
@@ -100,7 +106,7 @@ export class AppComponent implements OnInit {
   }
   /**
    * Event listener on the body for when a key has been released.
-   * Only updates the keymap.
+   * Updates keymap and removes any forces being applied to the player
    */
   @HostListener('document:keyup', ['$event'])
   onKeyUp(ev: KeyboardEvent) {
@@ -122,12 +128,16 @@ export class AppComponent implements OnInit {
     
     // Looping through each player to calculate their new position.
     this.players = this.players.map((player, i) => {
-      // First we'll calculate the forces being applied to the player, and the resulting acceleration and velocity from that.
-      player.force = this.calcForce(player.force, i === 0);
-      player.velocity = this.calcVelocity(player.force, player.mass);
+      // First we'll calculate what forces are being applied to the player
+      if(i === this.selectedPlayer) {
+        player.force = this.getForce();
+      }
+
+      // Then velocity of the object from the forces being applied to the player.
+      player.velocity = this.calcVelocity(player.velocity, player.force, player.mass);
 
       // Then we'll check if the player is going to collide with anything based on their current movement.
-      // If so, then this will return a player object with an inelastic collision performed.
+      // If so, then this will return a player object with an elastic collision performed.
       player = this.checkCollisions(player);
 
       // Updating the player's position.
@@ -136,6 +146,30 @@ export class AppComponent implements OnInit {
       // Done.
       return player;
     });
+  }
+
+  /**
+   * A function to look at what keys are being pressed and calculate what force vector. should be applied.
+   * @returns A force vector that always equals the movementCoefficient.
+   */
+  private getForce(): [number, number] {
+    // Calculating what force is being applied.
+    let forceX = 0;
+    let forceY = 0;
+
+    if(this.keymap.w === true) forceY -= this.gameSettings.movementCoefficient;
+    if(this.keymap.a === true) forceX -= this.gameSettings.movementCoefficient;
+    if(this.keymap.s === true) forceY += this.gameSettings.movementCoefficient;
+    if(this.keymap.d === true) forceX += this.gameSettings.movementCoefficient;
+
+    // If the player is going in a diagonal direction, we'll have to triangulate the force. 
+    if(forceX !== 0 && forceY !== 0) {
+      forceX *= Math.cos(45);
+      forceY *= Math.sin(45);
+    }
+
+    // Updating the controlled player
+    return [forceX, forceY];
   }
 
   /**
@@ -151,37 +185,23 @@ export class AppComponent implements OnInit {
   }
 
   /**
-   * A function representing the physics formula V = A * T. Calculates the new velocity vector based on the acceleration.
+   * A function representing the physics formula V = (F * t) / m. Calculates the new velocity vector based on the acceleration.
    * @param acceleration The player's current acceleration vector.
    * @returns A velocity vector.
    */
-  private calcVelocity(force: [number, number], mass:number): [number, number] {
-    return [
-      (force[0] / mass) * (1000/60),
-      (force[1] / mass) * (1000/60),
-    ];
-  }
+  private calcVelocity(velocity:[number, number], force: [number, number], mass: number): [number, number] {
+    // Guard clause to prevent going above max velocity
+    if(Math.pow(Math.pow(velocity[0], 2) + Math.pow(velocity[1], 2), 0.5) > this.gameSettings.maxVelocity) return velocity;
 
-  /**
-   * A function that updates the player's Force vector based on user input and friction.
-   * @param currentForce The current force vector being applied to the player.
-   * @param isControlling Whether the Force should include player inputs.
-   * @returns The new Force vector.
-   */
-  private calcForce(currentForce:[number, number], isControlling: boolean): [number, number] {
-    // Adding to the force vector based on user's input.
-    if(isControlling) {
-      if(this.keymap.w && currentForce[1] > -this.gameSettings.maxMovement) currentForce[1] -= this.gameSettings.movementCoefficient;
-      if(this.keymap.a && currentForce[0] > -this.gameSettings.maxMovement) currentForce[0] -= this.gameSettings.movementCoefficient;
-      if(this.keymap.s && currentForce[1] < this.gameSettings.maxMovement) currentForce[1] += this.gameSettings.movementCoefficient;
-      if(this.keymap.d && currentForce[0] < this.gameSettings.maxMovement) currentForce[0] += this.gameSettings.movementCoefficient;
-    }
+    // Adding velocity.
+    velocity[0] += ((force[0] * (1000/60))/mass);
+    velocity[1] += ((force[1] * (1000/60))/mass);
 
-    // Applying the frictional force to the player. This will be negated and multiplied based on their current Force.
-    return [
-      currentForce[0] - (this.gameSettings.frictionCoefficient * Math.sign(currentForce[0])),
-      currentForce[1] - (this.gameSettings.frictionCoefficient * Math.sign(currentForce[1]))
-    ]
+    // Applying friction based on the current velocity.
+    velocity[0] -= (velocity[0] * this.gameSettings.frictionCoefficient);
+    velocity[1] -= (velocity[1] * this.gameSettings.frictionCoefficient);
+
+    return velocity;
   }
 
   /**
@@ -195,19 +215,19 @@ export class AppComponent implements OnInit {
     const potentialPosition = this.calcPosition(currentPlayer.position, currentPlayer.velocity);
 
     // Checking for left and right wall collisions.
-    if(
+    if (
       potentialPosition[0] < currentPlayer.width/2 ||
       potentialPosition[0] > this.gameSettings.rinkDimensions[0] - currentPlayer.width/2
     ) {
-      currentPlayer.force[0] *= -1;
+      currentPlayer.velocity[0] *= -this.gameSettings.bounceCoefficient;
     }
 
     // Checking for top and bottom wall collisions.
-    if(
+    if (
       potentialPosition[1] < 0 ||
       potentialPosition[1] > this.gameSettings.rinkDimensions[1]
     ) {
-      currentPlayer.force[1] *= -1;
+      currentPlayer.velocity[1] *= -this.gameSettings.bounceCoefficient;
     }
 
     // Returning players values.
@@ -215,6 +235,6 @@ export class AppComponent implements OnInit {
   }
 
   private calcCollision(object1: {}) {
-
+    
   }
 }
