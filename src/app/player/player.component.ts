@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Player } from '../app.component';
+import Player from 'src/engine/Player';
 
 /**
  * A stateless component to render the player and their position.

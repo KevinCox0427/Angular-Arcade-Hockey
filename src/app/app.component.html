@@ -1,3 +1,3 @@
 <div class="app">
-    <app-rink [frame]="frame" [players]="players" [rinkDimensions]="gameSettings.rinkDimensions"></app-rink>
+    <app-rink [frame]="frame" [players]="engine.getPlayers()" [rinkDimensions]="engine.getSettings().rinkDimensions"></app-rink>
 </div>
