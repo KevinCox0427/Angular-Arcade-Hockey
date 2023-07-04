@@ -41,10 +41,10 @@ class MoveableObject {
     /**
      * A function representing the physics formula D = V * T. Adds distance based on current object's velocity.
      */
-    public setPosition() {
+    public updatePosition() {
         this.position = [
             this.position[0] + (this.getVelocity()[0] * (1000/60)),
-            this.position[1] + (this.getVelocity()[1]* (1000/60))
+            this.position[1] + (this.getVelocity()[1] * (1000/60))
         ];
     }
 
@@ -58,25 +58,27 @@ class MoveableObject {
 
     /**
      * A function representing the physics formula V = (F * t) / m. Calculates the new velocity vector based on the Force being applied.
+     * @param maxVelocity A cap on the velocity of the object.
+     * @param frictionCoefficient The coefficient of friction to apply on the object.
      */
-    public setVelocity(engine:Engine) {
+    public updateVelocity(maxVelocity: number, frictionCoefficient: number) {
         // Guard clause to prevent going above max velocity
-        if(Math.pow(Math.pow(this.getVelocity()[0], 2) + Math.pow(this.getVelocity()[1], 2), 0.5) > engine.getSettings().maxVelocity) return;
+        if(Math.pow(Math.pow(this.getVelocity()[0], 2) + Math.pow(this.getVelocity()[1], 2), 0.5) > maxVelocity) return;
 
         // Adding velocity.
         this.velocity[0] += ((this.getForce()[0] * (1000/60))/this.getMass());
         this.velocity[1] += ((this.getForce()[1] * (1000/60))/this.getMass());
 
         // Applying friction based on the current velocity.
-        this.velocity[0] -= (this.getVelocity()[0] * engine.getSettings().frictionCoefficient);
-        this.velocity[1] -= (this.getVelocity()[1] * engine.getSettings().frictionCoefficient);
+        this.velocity[0] -= (this.getVelocity()[0] * frictionCoefficient);
+        this.velocity[1] -= (this.getVelocity()[1] * frictionCoefficient);
     }
 
     /**
-     * A setter function to overwrite the velocity calculation performed.
+     * A setter function for the velocity.
      * @param velocity A velocity vector to overwrite with.
      */
-    public overwriteVelocity(velocity: [number, number]) {
+    public setVelocity(velocity: [number, number]) {
         this.velocity = velocity
     }
 
@@ -110,6 +112,19 @@ class MoveableObject {
      */
     public getWidth() {
         return this.width;
+    }
+
+    /**
+     * A getter function to get the position of each edge of the hitbox.
+     * @returns An object with the position of each edge.
+     */
+    public getHitbox() {
+        return  {
+            top: this.getPosition()[1] - (this.getWidth()/2),
+            bottom: this.getPosition()[1] + (this.getWidth()/2),
+            left: this.getPosition()[0] - (this.getWidth()/2),
+            right: this.getPosition()[0] + (this.getWidth()/2)
+        }
     }
 }
 

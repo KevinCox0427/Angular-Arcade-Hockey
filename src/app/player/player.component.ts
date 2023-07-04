@@ -11,4 +11,5 @@ import Player from 'src/engine/Player';
 })
 export class PlayerComponent {
   @Input() player: Player;
+  @Input() rinkDimensions: [number, number];
 }

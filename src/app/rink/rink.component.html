@@ -1,16 +1,20 @@
-<div class="scoreboard" [ngStyle]="{
-    'width.px': rinkDimensions[0],
-    'transform': 'translate(-50%, calc(-50% - ' + rinkDimensions[1]/2 + 'px))'
+<div class="rinkWrapper" [ngStyle]="{
+    'transform': 'translate(-50%, -50%) scale(' + scale + '%)'
 }">
-    <p>{{frame | frameToTime}}</p>
+    <div class="scoreboard" [ngStyle]="{
+        'width.px': rinkDimensions[0],
+        'transform': 'translate(-50%, calc(-50% - ' + rinkDimensions[1]/2 + 'px))'
+    }">
+        <p>{{frame | frameToTime: totalTime}}</p>
+    </div>
+    <div class="rink" [ngStyle]="{
+        'width.px': rinkDimensions[0],
+        'height.px': rinkDimensions[1]
+    }">
+        <app-player *ngFor="let player of players" [rinkDimensions]="rinkDimensions" [player]="player"></app-player>
+    </div>
+    <div class="bottomCover" [ngStyle]="{
+        'width.px': rinkDimensions[0],
+        'bottom': 'calc(calc(100% - ' + rinkDimensions[1] + 'px) * 0.5)'
+    }"></div>
 </div>
-<div class="rink" [ngStyle]="{
-    'width.px': rinkDimensions[0],
-    'height.px': rinkDimensions[1]
-}">
-    <app-player *ngFor="let player of players" [player]="player"></app-player>
-</div>
-<div class="bottomCover" [ngStyle]="{
-    'width.px': rinkDimensions[0],
-    'bottom': 'calc(calc(100% - ' + rinkDimensions[1] + 'px) * 0.5)'
-}"></div>

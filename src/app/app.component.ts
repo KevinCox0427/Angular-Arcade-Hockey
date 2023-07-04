@@ -4,8 +4,7 @@ import Engine from 'src/engine/Engine';
 import Player from 'src/engine/Player';
 
 /**
- * A class representing the entire game's state.
- * This will be the stateful comopenent that controls how all the other stateless componenets render.
+ * A stateful comopenent containing the game's engine, players, and timer.
  */
 @Component({
   selector: 'app-root',
@@ -21,21 +20,22 @@ export class AppComponent implements OnInit {
   gameTimer = timer(0, 1000/60);
   // Instantiating the game engine with some settings and two players for testing.
   engine = new Engine({
-    frictionCoefficient: 0.004,
-    rinkDimensions: [1250, 800],
-    movementCoefficient: 0.01,
-    maxVelocity: 2,
-    bounceCoefficient: 0.6
+    totalTime: 3000,
+    frictionCoefficient: 0.005,
+    rinkDimensions: [2000, 1000],
+    movementCoefficient: 0.009,
+    maxVelocity: 2.5,
+    bounceCoefficient: 1
   }, [
     new Player({
-      position: [500, 200],
+      position: [400, 250],
       mass: 20,
-      width: 70
+      width: 50
     }),
     new Player({
-      position: [500, 500],
-      mass: 20,
-      width: 70
+      position: [800, 500],
+      mass: 25,
+      width: 60
     })
   ]);
   // The index of the player that is currently being controlled.
@@ -47,8 +47,6 @@ export class AppComponent implements OnInit {
     's': false,
     'd': false
   }
-
-  constructor() {}
 
   /**
    * Starting the game engine's timer.
