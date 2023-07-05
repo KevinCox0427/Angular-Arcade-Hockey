@@ -34,8 +34,8 @@ export class AppComponent implements OnInit {
     }),
     new Player({
       position: [800, 500],
-      mass: 25,
-      width: 60
+      mass: 50,
+      width: 100
     })
   ]);
   // The index of the player that is currently being controlled.

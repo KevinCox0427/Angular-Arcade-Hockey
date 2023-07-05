@@ -31,6 +31,11 @@ class Engine {
     }, players: Player[]) {
         this.settings = settings;
         this.players = players;
+
+        console.log(JSON.stringify(this.calcCollision(
+            {mass: 10000, velocityInitial: [0,0], surfaceAngle: 90},
+            {mass: 10, velocityInitial: [1, 0], surfaceAngle: 0}
+        )))
     }
 
     /**
@@ -85,20 +90,8 @@ class Engine {
 
             // Checking for left and right wall collisions.
             if (
-                potentialPosition[0] < this.players[i].getWidth()/2 ||
-                potentialPosition[0] > this.settings.rinkDimensions[0] - this.players[i].getWidth()/2
-            ) {
-                this.players[i].setVelocity(
-                    this.calcCollision(
-                        {mass: this.players[i].getMass(), velocityInitial: this.players[i].getVelocity(), surfaceAngle: 0},
-                        {mass:100, velocityInitial:[0,0], surfaceAngle: 0}
-                    )[0]
-                );
-            }
-
-            if(
-                potentialPosition[1] < 0 ||
-                potentialPosition[1] > this.settings.rinkDimensions[1]
+                potentialPosition[0] < this.players[i].getWidth() / 2 ||
+                potentialPosition[0] > this.settings.rinkDimensions[0] - this.players[i].getWidth() / 2
             ) {
                 this.players[i].setVelocity(
                     this.calcCollision(
@@ -108,26 +101,42 @@ class Engine {
                 );
             }
 
+            // Checking for top and bottom wall collisions.
+            if(
+                potentialPosition[1] < 0 ||
+                potentialPosition[1] > this.settings.rinkDimensions[1]
+            ) {
+                this.players[i].setVelocity(
+                    this.calcCollision(
+                        {mass: this.players[i].getMass(), velocityInitial: this.players[i].getVelocity(), surfaceAngle: 0},
+                        {mass:100, velocityInitial:[0,0], surfaceAngle: 0}
+                    )[0]
+                );
+            }
+
             // Looping through every other player to check for collisions.
             for(let j = 0; j < this.players.length; j++) {
                 // If the it's the same player or the collision has already been performed, just ignore.
                 if(i === j || collisionsPerformed.some(collision => {return collision.includes(i) || collision.includes(j)})) continue;
 
-                // Getting the hitboxes.
-                const playerEdges = this.players[i].getHitbox();
-                const otherPlayerEdges = this.players[j].getHitbox();
+                // Getting the potentional position of the other player.
+                const potentialPosition2 = [
+                    this.players[j].getPosition()[0] + (this.players[j].getVelocity()[0] * (1000/60)),
+                    this.players[j].getPosition()[1] + (this.players[j].getVelocity()[1] * (1000/60))
+                ]
+
+                // Triangulating the distance between the two players.
+                const distance = Math.pow(Math.pow(Math.abs(potentialPosition[0] - potentialPosition2[0]), 2) + Math.pow(Math.abs(potentialPosition[1] - potentialPosition2[1]), 2), 0.5);
 
                 // If the hitboxes overlap, perform the collision.
-                if (
-                    playerEdges.left < otherPlayerEdges.right &&
-                    playerEdges.right > otherPlayerEdges.left &&
-                    playerEdges.top < otherPlayerEdges.bottom &&
-                    playerEdges.bottom > otherPlayerEdges.top
-                ) {
+                if (distance < (this.players[i].getWidth() + this.players[j].getWidth()) / 2) {
+                    // Getting angle of the tangent line for the point of contact.
+                    const surfaceAngle = Math.atan2(this.players[i].getPosition()[1] - this.players[j].getPosition()[1], this.players[i].getPosition()[0] - this.players[j].getPosition()[0]) + (90 * (Math.PI/180));
+
                     // Calling the calc collision function.
                     const collidedVelocities = this.calcCollision(
-                        {mass: this.players[i].getMass(), velocityInitial: this.players[i].getVelocity(), surfaceAngle: 0},
-                        {mass: this.players[j].getMass(), velocityInitial: this.players[j].getVelocity(), surfaceAngle: 0}
+                        {mass: this.players[i].getMass(), velocityInitial: this.players[i].getVelocity(), surfaceAngle:surfaceAngle},
+                        {mass: this.players[j].getMass(), velocityInitial: this.players[j].getVelocity(), surfaceAngle:surfaceAngle}
                     );
                     
                     // Overwriting each players velocity.
@@ -142,10 +151,11 @@ class Engine {
     }
 
     /**
-     * Function representing an elastic collision. Formula is a simplified system of equations, with both formulas being u1 + v1 = v2 + u2 and m1u1 + m2u2 = m1v1 + m2v2.
+     * Function representing a 2-D elastic collision.
+     * Formula can be found here: https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects.
      * @param object1 First object of the collision
      * @param object2 Second object of the collision.
-     * @returns An array of velocity vectors. The first index is the first object's new velocity vector, and the second index is the second objects new velocity vector.
+     * @returns An array of velocity vectors. The first index is the object1's new velocity vector, and the second index is the object2's new velocity vector.
      */
     public calcCollision(object1: {
         mass: number,
@@ -156,47 +166,38 @@ class Engine {
         velocityInitial: [number, number],
         surfaceAngle: number
     }): [[number, number], [number, number]] {
+        // Calculating the angles of the velocities.
+        const velocityAngle1 = Math.atan2(object1.velocityInitial[1], object1.velocityInitial[0]);
+        const velocityAngle2 = Math.atan2(object1.velocityInitial[1], object1.velocityInitial[0]);
+
+        const scalarVector1 = (object1.velocityInitial[0] / Math.cos(velocityAngle1));
+        const scalarVector2 = (object2.velocityInitial[0] / Math.cos(velocityAngle2));
+
+        // Converting degrees to radians.
+        object1.surfaceAngle *= (Math.PI/180);
+        object2.surfaceAngle *= (Math.PI/180);
+
         // Calculating formula for both X and Y on the first object.
+        // Can be found here: https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
+        // My god is it ugly and it only took me 3 days of completely failing vector rotations to just find the answer on the bottom of a Wikipedia article. 
         const finalVelocity1: [number, number] = [
-            (((object1.mass - object2.mass) * object1.velocityInitial[0]) + (2 * object2.mass * object2.velocityInitial[0])) / (object1.mass + object2.mass),
-            (((object1.mass - object2.mass) * object1.velocityInitial[1]) + (2 * object2.mass * object2.velocityInitial[1])) / (object1.mass + object2.mass)
+            ((((scalarVector1 * Math.cos(velocityAngle1 - object2.surfaceAngle) * (object1.mass - object2.mass)) + (2 * object2.mass * scalarVector2 * Math.cos(velocityAngle2 - object2.surfaceAngle))) / (object1.mass + object2.mass)) * Math.cos(object2.surfaceAngle)) + (scalarVector1 * Math.sin(velocityAngle1 - object2.surfaceAngle) * Math.cos(object2.surfaceAngle + (Math.PI / 2))),
+
+            ((((scalarVector1 * Math.cos(velocityAngle1 - object2.surfaceAngle) * (object1.mass - object2.mass)) + (2 * object2.mass * scalarVector2 * Math.cos(velocityAngle2 - object2.surfaceAngle))) / (object1.mass + object2.mass)) * Math.sin(object2.surfaceAngle)) + ((object1.velocityInitial[0]/Math.cos(velocityAngle1)) * Math.sin(velocityAngle1 - object2.surfaceAngle) * Math.sin(object2.surfaceAngle + (Math.PI / 2)))
         ];
-
-        const incidentAngle1 = Math.atan2(finalVelocity1[0], finalVelocity1[1]) * (180/Math.PI);
-        const transformationAmount1 = (Math.sign(finalVelocity1[0]) * Math.sign(finalVelocity1[1])) * (90 - object2.surfaceAngle - incidentAngle1) * 2;
-        const transformedVelocity1 = this.rotateVector(finalVelocity1, transformationAmount1);
-
-        console.log(incidentAngle1, transformationAmount1)
         
-        // Calculating formula for both X and Y on the second object.
+        // Calculating formula for both X and Y on the second object. Same as above just swapping the velocities and masses.
         const finalVelocity2: [number, number] = [
-            (((object2.mass - object1.mass) * object2.velocityInitial[0]) + (2 * object1.mass * object1.velocityInitial[0])) / (object1.mass + object2.mass),
-            (((object2.mass - object1.mass) * object2.velocityInitial[1]) + (2 * object1.mass * object1.velocityInitial[1])) / (object1.mass + object2.mass)
+            ((((scalarVector2 * Math.cos(velocityAngle2 - object1.surfaceAngle) * (object2.mass - object1.mass)) + (2 * object1.mass * scalarVector1 * Math.cos(velocityAngle1 - object1.surfaceAngle))) / (object2.mass + object1.mass)) * Math.cos(object1.surfaceAngle)) + (scalarVector2 * Math.sin(velocityAngle2 - object1.surfaceAngle) * Math.cos(object1.surfaceAngle + (Math.PI / 2))),
+
+            ((((scalarVector2 * Math.cos(velocityAngle2 - object1.surfaceAngle) * (object2.mass - object1.mass)) + (2 * object1.mass * scalarVector1 * Math.cos(velocityAngle1 - object1.surfaceAngle))) / (object2.mass + object1.mass)) * Math.sin(object1.surfaceAngle)) + ((object2.velocityInitial[0]/Math.cos(velocityAngle2)) * Math.sin(velocityAngle2 - object1.surfaceAngle) * Math.sin(object1.surfaceAngle + (Math.PI / 2)))
         ];
 
-        const incidentAngle2 = Math.atan2(finalVelocity2[0], finalVelocity2[1]) * (180/Math.PI);
-        const transformationAmount2 = (incidentAngle2 - 90 - object1.surfaceAngle) * 2;
-        
-        const transformedVelocity2 = this.rotateVector(finalVelocity2, transformationAmount2);
-
-        // Returns the two new velocity vectors. Reducing bouncing by a little bit.
+        // Returns the two new velocity vectors.
         return [
-            [transformedVelocity1[0], transformedVelocity1[1]],
-            [transformedVelocity2[0], transformedVelocity2[1]]
+            finalVelocity1,
+            finalVelocity2
         ];
-    }
-
-    /**
-     * A formula to transform the rotate the vector by degrees.
-     * @param vector The initial vector.
-     * @param theta The amount to transform by in degrees.
-     * @returns The resulting vector.
-     */
-    private rotateVector(vector: [number, number], theta: number): [number, number] {
-        return [
-            (vector[0] * Math.cos(theta)) - (vector[1] * Math.sin(theta)),
-            (vector[0] * Math.sin(theta)) + (vector[1] * Math.cos(theta))
-        ]
     }
 }
 

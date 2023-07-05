@@ -1,6 +1,7 @@
 .player {
     position: absolute;
     height: 100px;
-    background-color: #f06e3f;
+    box-shadow: 0 0 0 3px #f06e3f inset;
+    border-radius: 100000px;
     transform: translate(-50%, -50%);
 }
