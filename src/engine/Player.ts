@@ -1,4 +1,3 @@
-import Engine from "./Engine";
 import MoveableObject from "./MoveableObject";
 
 /**
