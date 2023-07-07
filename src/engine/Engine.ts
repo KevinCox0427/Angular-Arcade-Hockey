@@ -1,4 +1,6 @@
+import MoveableObject from "./MoveableObject";
 import Player from "./Player";
+import Puck from "./Puck";
 
 /**
  * A class representing the game's engine and state of players.
@@ -15,6 +17,8 @@ class Engine {
     }
     // An array of players.
     private players: Player[];
+    // The puck on the rink.
+    private puck: Puck;
 
     /**
      * A constructor to intiate the game's engine and state of players.
@@ -31,6 +35,12 @@ class Engine {
     }, players: Player[]) {
         this.settings = settings;
         this.players = players;
+        // Creating the puck in the center of the rink on construction.
+        this.puck = new Puck({
+            position: [this.settings.rinkDimensions[0]/2 - 15, this.settings.rinkDimensions[1]/2 - 15],
+            mass: 2,
+            width: 30
+        });
     }
 
     /**
@@ -41,10 +51,17 @@ class Engine {
     }
     
     /**
-     * Getter for the array of players.
+     * Getter for the array of player classes.
      */
     public getPlayers() {
         return this.players
+    }
+
+    /**
+     * Getter for the puck class.
+     */
+    public getPuck() {
+        return this.puck
     }
 
     /**
@@ -54,43 +71,55 @@ class Engine {
      * @param keymap An object representing what keys are currently being pressed by the user.
      */
     public updateTick(selectedPlayerIndex: number, keymap: {[key: string]: boolean}) {
-        // Updating the players' velocities.
-        this.players.forEach((player, i) => {
+        // Getting an array of every moveable object to perform collisions.
+        // Don't like the fact that I'm creating a new array every frame, rip memory. Gotta rethink this.
+        const totalObjects:MoveableObject[] = [...this.players, this.puck];
+
+        // Updating the object's velocities.
+        totalObjects.forEach((object, i) => {
             // First we'll calculate what forces are being applied to the player
-            if(i === selectedPlayerIndex) player.userInputForce(keymap, this.getSettings().movementCoefficient);
-            // Then set velocities of the player from the forces being applied to the player.
-            player.updateVelocity(this.getSettings().maxVelocity, this.getSettings().frictionCoefficient);
+            if(object instanceof Player){
+                if(i === selectedPlayerIndex) {
+                    object.userInputForce(keymap, this.getSettings().movementCoefficient);
+                }
+                else {
+                    object.removeUserInputForce();
+                }
+            }
+            // Then set velocities of the object from the forces being applied to the object.
+            object.updateVelocity(this.getSettings().maxVelocity, this.getSettings().frictionCoefficient);
         });
     
-        // Then we'll check if the player is going to collide with anything based on their current movement.
-        this.checkCollisions();
+        // Then we'll check if the object is going to collide with anything based on their current movement.
+        this.checkCollisions(totalObjects);
     
-        // Updating the players' positions.
-        this.players.forEach(player => player.updatePosition());
+        // Updating the object's positions.
+        totalObjects.forEach(object => object.updatePosition());
     }
 
     /**
-     * A function that will check for collisions based on the current player's movement.
-     * If a player does collide with an object or the wall, will perform an elastic collision.
+     * A function that will check for collisions based on the current object's movement.
+     * If a object does collide with an object or the wall, will perform an elastic collision.
+     * @param totalObjects An array of every moveable object on the rink.
      */
-    private checkCollisions() {
+    private checkCollisions(totalObjects:MoveableObject[]) {
         const collisionsPerformed:[number, number][] = [];
 
-        for(let i = 0; i < this.players.length; i++) {
+        for(let i = 0; i < totalObjects.length; i++) {
             // Calculating the potential position if no collision occured.
             const potentialPosition = [
-                this.players[i].getPosition()[0] + (this.players[i].getVelocity()[0] * (1000/60)),
-                this.players[i].getPosition()[1] + (this.players[i].getVelocity()[1]* (1000/60))
+                totalObjects[i].getPosition()[0] + (totalObjects[i].getVelocity()[0] * (1000/60)),
+                totalObjects[i].getPosition()[1] + (totalObjects[i].getVelocity()[1] * (1000/60))
             ]
 
             // Checking for left and right wall collisions.
             if (
-                potentialPosition[0] < this.players[i].getWidth() / 2 ||
-                potentialPosition[0] > this.settings.rinkDimensions[0] - this.players[i].getWidth() / 2
+                potentialPosition[0] < totalObjects[i].getWidth() / 2 ||
+                potentialPosition[0] > this.settings.rinkDimensions[0] - totalObjects[i].getWidth() / 2
             ) {
-                this.players[i].setVelocity(
+                totalObjects[i].setVelocity(
                     this.calcCollision(
-                        {mass: this.players[i].getMass(), velocityInitial: this.players[i].getVelocity(), normalAngle: 0},
+                        {mass: totalObjects[i].getMass(), velocityInitial: totalObjects[i].getVelocity(), normalAngle: 0},
                         {mass:100, velocityInitial:[0,0], normalAngle: 0}
                     )[0]
                 );
@@ -101,42 +130,42 @@ class Engine {
                 potentialPosition[1] < 0 ||
                 potentialPosition[1] > this.settings.rinkDimensions[1]
             ) {
-                this.players[i].setVelocity(
+                totalObjects[i].setVelocity(
                     this.calcCollision(
-                        {mass: this.players[i].getMass(), velocityInitial: this.players[i].getVelocity(), normalAngle: (Math.PI/2)},
+                        {mass: totalObjects[i].getMass(), velocityInitial: totalObjects[i].getVelocity(), normalAngle: (Math.PI/2)},
                         {mass:100, velocityInitial:[0,0], normalAngle: (Math.PI/2)}
                     )[0]
                 );
             }
 
-            // Looping through every other player to check for collisions.
-            for(let j = 0; j < this.players.length; j++) {
-                // If the it's the same player or the collision has already been performed, just ignore.
+            // Looping through every other object to check for collisions.
+            for(let j = 0; j < totalObjects.length; j++) {
+                // If the it's the same object or the collision has already been performed, just ignore.
                 if(i === j || collisionsPerformed.some(collision => {return collision.includes(i) || collision.includes(j)})) continue;
 
-                // Getting the potentional position of the other player.
+                // Getting the potentional position of the other object.
                 const potentialPosition2 = [
-                    this.players[j].getPosition()[0] + (this.players[j].getVelocity()[0] * (1000/60)),
-                    this.players[j].getPosition()[1] + (this.players[j].getVelocity()[1] * (1000/60))
-                ]
+                    totalObjects[j].getPosition()[0] + (totalObjects[j].getVelocity()[0] * (1000/60)),
+                    totalObjects[j].getPosition()[1] + (totalObjects[j].getVelocity()[1] * (1000/60))
+                ];
 
-                // Triangulating the distance between the two players.
+                // Triangulating the distance between the two objects.
                 const distance = Math.pow(Math.pow(Math.abs(potentialPosition[0] - potentialPosition2[0]), 2) + Math.pow(Math.abs(potentialPosition[1] - potentialPosition2[1]), 2), 0.5);
 
                 // If the hitboxes overlap, perform the collision.
-                if (distance < (this.players[i].getWidth() + this.players[j].getWidth()) / 2) {
-                    // Getting perpendical angle of the tangent line for the point of contact.
-                    const normalAngle = Math.atan2(this.players[i].getPosition()[1] - this.players[j].getPosition()[1], this.players[i].getPosition()[0] - this.players[j].getPosition()[0]);
+                if (distance < (totalObjects[i].getWidth() + totalObjects[j].getWidth()) / 2) {
+                    // Getting perpendical angle of the tangent line for the point of contact on the opposing circle.
+                    const normalAngle = Math.atan2(totalObjects[i].getPosition()[1] - totalObjects[j].getPosition()[1], totalObjects[i].getPosition()[0] - totalObjects[j].getPosition()[0]);
 
                     // Calling the calc collision function.
                     const collidedVelocities = this.calcCollision(
-                        {mass: this.players[i].getMass(), velocityInitial: this.players[i].getVelocity(), normalAngle: normalAngle},
-                        {mass: this.players[j].getMass(), velocityInitial: this.players[j].getVelocity(), normalAngle: normalAngle}
+                        {mass: totalObjects[i].getMass(), velocityInitial: totalObjects[i].getVelocity(), normalAngle: normalAngle},
+                        {mass: totalObjects[j].getMass(), velocityInitial: totalObjects[j].getVelocity(), normalAngle: normalAngle}
                     );
                     
-                    // Overwriting each players velocity.
-                    this.players[i].setVelocity(collidedVelocities[0]);
-                    this.players[j].setVelocity(collidedVelocities[1]);
+                    // Overwriting each objects velocity.
+                    totalObjects[i].setVelocity(collidedVelocities[0]);
+                    totalObjects[j].setVelocity(collidedVelocities[1]);
 
                     // Adding it to the collisions performed so we don't do it twice.
                     collisionsPerformed.push([i, j]);
@@ -148,8 +177,8 @@ class Engine {
     /**
      * Function representing a 2-D elastic collision.
      * Formula can be found here: https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects.
-     * @param object1 First object of the collision
-     * @param object2 Second object of the collision.
+     * @param object1 First object of the collision. Includes it's velocity, mass, and the perpendicular angle of the opposing surface.
+     * @param object2 Second object of the collision. Includes it's velocity, mass, and the perpendicular angle of the opposing surface.
      * @returns An array of velocity vectors. The first index is the object1's new velocity vector, and the second index is the object2's new velocity vector.
      */
     public calcCollision(object1: {
@@ -163,7 +192,7 @@ class Engine {
     }): [[number, number], [number, number]] {
         // Calculating the angles of the velocities.
         const velocityAngle1 = Math.atan2(object1.velocityInitial[1], object1.velocityInitial[0]);
-        const velocityAngle2 = Math.atan2(object1.velocityInitial[1], object1.velocityInitial[0]);
+        const velocityAngle2 = Math.atan2(object2.velocityInitial[1], object2.velocityInitial[0]);
 
         // Getting the scalar quantities of each velocity vector.
         const scalarVector1 = (object1.velocityInitial[0] / Math.cos(velocityAngle1));

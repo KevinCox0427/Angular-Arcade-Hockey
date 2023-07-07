@@ -1,5 +1,7 @@
 <div class="rinkWrapper" [ngStyle]="{
-    'transform': 'translate(-50%, -50%) scale(' + scale + '%)'
+    'transform': 'translate(-50%, -50%) scale(' + scale + '%)',
+    'width.px': rinkDimensions[0],
+    'height.px': rinkDimensions[1]
 }">
     <div class="scoreboard" [ngStyle]="{
         'width.px': rinkDimensions[0],
@@ -11,10 +13,25 @@
         'width.px': rinkDimensions[0],
         'height.px': rinkDimensions[1]
     }">
-        <app-player *ngFor="let player of players" [rinkDimensions]="rinkDimensions" [player]="player"></app-player>
+        <app-player
+            *ngFor="let player of players; let i = index"
+            [rinkDimensions]="rinkDimensions"
+            [player]="player"
+            [index]="i"
+            [selectedPlayer]="selectedPlayer"
+        ></app-player>
+        <app-puck
+            [rinkDimensions]="rinkDimensions"
+            [puck]="puck"
+        ></app-puck>
     </div>
     <div class="bottomCover" [ngStyle]="{
-        'width.px': rinkDimensions[0],
+        'width.px': rinkDimensions[0] - 100,
         'bottom': 'calc(calc(100% - ' + rinkDimensions[1] + 'px) * 0.5)'
-    }"></div>
+    }">
+        <p><span>Move:</span> WASD</p>
+        <p><span>Change Players:</span> 1 - 4</p>
+        <p><span>Block:</span> SHIFT</p>
+        <p><span>Hit:</span> LEFT CLICK</p>
+    </div>
 </div>

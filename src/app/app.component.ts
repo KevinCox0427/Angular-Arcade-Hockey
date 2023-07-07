@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { timer } from 'rxjs';
 import Engine from 'src/engine/Engine';
 import Player from 'src/engine/Player';
+import Puck from 'src/engine/Puck';
 
 /**
  * A stateful comopenent containing the game's engine, players, and timer.
@@ -26,27 +27,20 @@ export class AppComponent implements OnInit {
     movementCoefficient: 0.009,
     maxVelocity: 2.5,
     bounceCoefficient: 1
-  }, [
-    new Player({
-      position: [400, 250],
-      mass: 20,
-      width: 50
-    }),
-    new Player({
-      position: [800, 500],
-      mass: 25,
-      width: 70
-    })
-  ]);
+  },
+  // Generating random players for testing.
+  Array.from(Array(8)).map((_, i) => {
+    const randomSize = Math.round(20 + (Math.random() * 10));
+    return new Player({
+      position: [100 + (250 * i), 800 - (Math.random()*600)],
+      mass: randomSize,
+      width: randomSize*2
+    });
+  }));
   // The index of the player that is currently being controlled.
   selectedPlayer = 0;
   // A keymap to keep track of what buttons the player has pressed
-  keymap = {
-    'w': false,
-    'a': false,
-    's': false,
-    'd': false
-  }
+  keymap = {}
 
   /**
    * Starting the game engine's timer.
@@ -58,6 +52,7 @@ export class AppComponent implements OnInit {
       // Keeping track of the frames.
       this.frame = val;
       this.timestamp = Date.now();
+
       // Updating the engine for one frame.
       this.engine.updateTick(this.selectedPlayer, this.keymap);
     });
@@ -70,10 +65,14 @@ export class AppComponent implements OnInit {
   @HostListener('document:keydown', ['$event'])
   onKeyDown(ev: KeyboardEvent) {
     // Updating keymap.
-    if(ev.key === 'w') this.keymap.w = true;
-    if(ev.key === 'a') this.keymap.a = true;
-    if(ev.key === 's') this.keymap.s = true;
-    if(ev.key === 'd') this.keymap.d = true;
+    this.keymap = {...this.keymap,
+      [ev.key.toLowerCase()]: true
+    };
+
+    // Seeing if the user is switching players.
+    if(parseInt(ev.key) && parseInt(ev.key) > 0 && parseInt(ev.key) < 5){
+      this.selectedPlayer = parseInt(ev.key) - 1;
+    }
   }
   /**
    * Event listener on the body for when a key has been released.
@@ -81,9 +80,8 @@ export class AppComponent implements OnInit {
    */
   @HostListener('document:keyup', ['$event'])
   onKeyUp(ev: KeyboardEvent) {
-    if(ev.key === 'w') this.keymap.w = false;
-    if(ev.key === 'a') this.keymap.a = false;
-    if(ev.key === 's') this.keymap.s = false;
-    if(ev.key === 'd') this.keymap.d = false;
+    this.keymap = {...this.keymap,
+      [ev.key.toLowerCase()]: false
+    };
   }
 }

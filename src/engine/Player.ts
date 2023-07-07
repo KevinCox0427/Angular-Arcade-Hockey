@@ -29,6 +29,13 @@ class Player extends MoveableObject {
         // Updating the controlled player
         this.setForce([forceX, forceY]);
     }
+
+    /**
+     * Function to cancel all of the forces for when a user changes what player they're controlling.
+     */
+    public removeUserInputForce() {
+        this.setForce([0,0]);
+    }
 }
 
 export default Player;

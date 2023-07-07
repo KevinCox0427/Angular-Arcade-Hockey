@@ -5,7 +5,7 @@ import Engine from "./Engine";
  * This responsible for storing the dimensions and movement vectors to calculate its position every frame.
  */
 class MoveableObject {
-    // A coordinate in pxs of where the object is on the rink.
+    // A coordinate of where the object is on the rink.
     private position: [number, number];
     // The velocity vector of the object at the current frame.
     private velocity: [number, number] = [0,0];
@@ -13,7 +13,7 @@ class MoveableObject {
     private force: [number, number] = [0,0];
     // The mass of the object in kgs.
     private mass: number;
-    // The px width of the hitbox of the object.
+    // The radius for the hitbox of the object.
     private width: number;
 
     /**
@@ -108,23 +108,10 @@ class MoveableObject {
 
     /**
      * A getter function for the width of this object's hitbox.
-     * @returns The width of the hitbox in pxs.
+     * @returns The width of the hitbox in the rink dimension's units.
      */
     public getWidth() {
         return this.width;
-    }
-
-    /**
-     * A getter function to get the position of each edge of the hitbox.
-     * @returns An object with the position of each edge.
-     */
-    public getHitbox() {
-        return  {
-            top: this.getPosition()[1] - (this.getWidth()/2),
-            bottom: this.getPosition()[1] + (this.getWidth()/2),
-            left: this.getPosition()[0] - (this.getWidth()/2),
-            right: this.getPosition()[0] + (this.getWidth()/2)
-        }
     }
 }
 

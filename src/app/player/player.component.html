@@ -1,6 +1,12 @@
-<div class="player" [ngStyle]="{
+<div [ngClass]="{
+    player: true,
+    isControlled: index === selectedPlayer,
+    isEnemy: index > 3
+}" [ngStyle]="{
     'top.px': rinkDimensions[1] - player.getPosition()[1],
     'left.px': player.getPosition()[0],
     'width.px': player.getWidth(),
     'height.px': player.getWidth()
-}"></div>
+}">
+    <p>{{index < 4 ? index+1 : ''}}</p>
+</div>

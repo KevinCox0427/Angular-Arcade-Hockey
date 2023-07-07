@@ -1,3 +1,10 @@
 <div class="app">
-    <app-rink [totalTime]="engine.getSettings().totalTime" [frame]="frame" [players]="engine.getPlayers()" [rinkDimensions]="engine.getSettings().rinkDimensions"></app-rink>
+    <app-rink
+        [totalTime]="engine.getSettings().totalTime"
+        [frame]="frame"
+        [players]="engine.getPlayers()"
+        [selectedPlayer]="selectedPlayer"
+        [puck]="engine.getPuck()"
+        [rinkDimensions]="engine.getSettings().rinkDimensions"
+    ></app-rink>
 </div>

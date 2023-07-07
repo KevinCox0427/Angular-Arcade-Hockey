@@ -1,7 +1,33 @@
 .player {
     position: absolute;
     height: 100px;
-    box-shadow: 0 0 0 3px #f06e3f inset;
+    box-shadow: 0 0 0 5px inset;
     border-radius: 100000px;
     transform: translate(-50%, -50%);
+    color: #ff3eff;
+    transition: 0.1s linear color;
+
+    &.isControlled {
+        animation: 2s infinite 0s ease-in-out SelectedPlayer
+    }
+
+    &.isEnemy {
+        color: #ffc800;
+    }
+
+    @keyframes SelectedPlayer {
+        from { color: #adff4f}
+        50% {color: #ff3eff}
+        to {color: #adff4f}
+    }
+
+    p {
+        position: absolute;
+        margin: 0;
+        font-size: 1.5em;
+        font-weight: 800;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
 }
