@@ -1,6 +1,6 @@
 # Angular Arcade Hockey
 
-### [GitHub Repository](https://github.com/KevinCox0427/Angular-Arcade-Hockey) | [Dev Diary](https://github.com/KevinCox0427/Angular-Arcade-Hockey/wiki/Game-Dev-Diary-until-I-get-hired)
+### [GitHub Repository](https://github.com/KevinCox0427/Angular-Arcade-Hockey) | [Live Code Sandbox](https://codesandbox.io/p/sandbox/angular-arcade-hockey-tfffm5) | [Dev Diary](https://github.com/KevinCox0427/Angular-Arcade-Hockey/wiki/Game-Dev-Diary-until-I-get-hired)
 
 ---
 
@@ -8,8 +8,8 @@
 
 This website is intended to show my abilities in Angular.
 The goal is to create a 2-D hockey action game based on NES Hockey.
-This will have multiplayer game sessions where users can invite their friends to duel.
-Finally, I will be creating a nueral network with a reinforcement model for the AI players.
+It will have multiplayer game sessions where users can invite their friends to duel.
+And I'll also be creating a neural network with a reinforcement model for the AI players.
 
 ___
 
