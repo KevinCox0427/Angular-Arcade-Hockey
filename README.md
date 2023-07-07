@@ -1,12 +1,8 @@
 # Angular Arcade Hockey
 
----
-
 ### [GitHub Repository](https://github.com/KevinCox0427/Angular-Arcade-Hockey) | [Dev Diary](https://github.com/KevinCox0427/Angular-Arcade-Hockey/wiki/Game-Dev-Diary-until-I-get-hired)
 
 ---
-
-[Dev Diary](https://github.com/KevinCox0427/Angular-Arcade-Hockey/wiki/Game-Dev-Diary-until-I-get-hired)
 
 ### The idea:
 
