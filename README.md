@@ -6,6 +6,8 @@
 
 ---
 
+[Dev Diary](https://github.com/KevinCox0427/Angular-Arcade-Hockey/wiki/Game-Dev-Diary-until-I-get-hired)
+
 ### The idea:
 
 This website is intended to show my abilities in Angular.
