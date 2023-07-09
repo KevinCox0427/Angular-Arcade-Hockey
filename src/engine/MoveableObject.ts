@@ -1,4 +1,6 @@
+import CircularHitbox from "./CircularHitbox";
 import Engine from "./Engine";
+import RectangularHitbox from "./RectangularHitbox";
 
 /**
  * A class representing a moveable object on the rink.
@@ -13,8 +15,8 @@ class MoveableObject {
     private force: [number, number] = [0,0];
     // The mass of the object in kgs.
     private mass: number;
-    // The radius for the hitbox of the object.
-    private width: number;
+    // All the hitboxes for this object.
+    private hitboxes: (CircularHitbox | RectangularHitbox)[]
 
     /**
      * A constructor to create a moveable object on the rink.
@@ -23,11 +25,11 @@ class MoveableObject {
     constructor(args: {
         position: [number, number],
         mass: number,
-        width: number
+        hitboxes: (CircularHitbox | RectangularHitbox)[]
     }) {
         this.position = args.position;
         this.mass = args.mass;
-        this.width = args.width;
+        this.hitboxes = args.hitboxes;
     }
 
     /**
@@ -66,8 +68,8 @@ class MoveableObject {
         if(Math.pow(Math.pow(this.getVelocity()[0], 2) + Math.pow(this.getVelocity()[1], 2), 0.5) > maxVelocity) return;
 
         // Adding velocity.
-        this.velocity[0] += ((this.getForce()[0] * (1000/60))/this.getMass());
-        this.velocity[1] += ((this.getForce()[1] * (1000/60))/this.getMass());
+        this.velocity[0] += ((this.getForce()[0] * (1000/60)) / this.getMass());
+        this.velocity[1] += ((this.getForce()[1] * (1000/60)) / this.getMass());
 
         // Applying friction based on the current velocity.
         this.velocity[0] -= (this.getVelocity()[0] * frictionCoefficient);
@@ -107,11 +109,24 @@ class MoveableObject {
     }
 
     /**
-     * A getter function for the width of this object's hitbox.
-     * @returns The width of the hitbox in the rink dimension's units.
+     * A getter function for the hitboxes of this object.
+     * @returns An array of hitbox classes.
      */
-    public getWidth() {
-        return this.width;
+    public getHitboxes() {
+        return this.hitboxes;
+    }
+
+    /**
+     * A setter function for a hitbox at a given index.
+     * @param i The index of the hitbox to overwrite
+     * @param hitbox The hitbox to overwrite with.
+     */
+    public setHitbox(i: number, hitbox: CircularHitbox | RectangularHitbox) {
+        this.hitboxes[i] = hitbox;
+    }
+
+    public testHitboxes(otherObject: MoveableObject): [number, number] | false {
+        return false;
     }
 }
 

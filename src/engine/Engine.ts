@@ -1,6 +1,8 @@
+import CircularHitbox from "./CircularHitbox";
 import MoveableObject from "./MoveableObject";
 import Player from "./Player";
 import Puck from "./Puck";
+import RectangularHitbox from "./RectangularHitbox";
 
 /**
  * A class representing the game's engine and state of players.
@@ -39,7 +41,7 @@ class Engine {
         this.puck = new Puck({
             position: [this.settings.rinkDimensions[0]/2 - 15, this.settings.rinkDimensions[1]/2 - 15],
             mass: 2,
-            width: 30
+            hitboxes: [new CircularHitbox(30, [0, 0])]
         });
     }
 
@@ -113,10 +115,10 @@ class Engine {
             ]
 
             // Checking for left and right wall collisions.
-            if (
-                potentialPosition[0] < totalObjects[i].getWidth() / 2 ||
-                potentialPosition[0] > this.settings.rinkDimensions[0] - totalObjects[i].getWidth() / 2
-            ) {
+            if (totalObjects[i].getHitboxes().every(hitbox => 
+                potentialPosition[0] < (hitbox.getWidth() / 2) ||
+                potentialPosition[0] > this.settings.rinkDimensions[0] - (hitbox.getWidth() / 2)
+            )) {
                 totalObjects[i].setVelocity(
                     this.calcCollision(
                         {mass: totalObjects[i].getMass(), velocityInitial: totalObjects[i].getVelocity(), normalAngle: 0},
@@ -126,10 +128,18 @@ class Engine {
             }
 
             // Checking for top and bottom wall collisions.
-            if(
-                potentialPosition[1] < 0 ||
-                potentialPosition[1] > this.settings.rinkDimensions[1]
-            ) {
+            if(totalObjects[i].getHitboxes().every(hitbox => {
+                // If it's a rectanglular hitbox, then it'll have a height
+                if(hitbox instanceof RectangularHitbox) return (
+                    potentialPosition[1] < (hitbox.getHeight() / 2) ||
+                    potentialPosition[1] > this.settings.rinkDimensions[1] - (hitbox.getHeight() / 2)
+                );
+                // Otherwise it's a circle and we'll just use the diamter
+                else return (
+                    potentialPosition[1] < (hitbox.getWidth() / 2)
+                    || potentialPosition[1] > this.settings.rinkDimensions[1] - (hitbox.getWidth() / 2)
+                );
+            })) {
                 totalObjects[i].setVelocity(
                     this.calcCollision(
                         {mass: totalObjects[i].getMass(), velocityInitial: totalObjects[i].getVelocity(), normalAngle: (Math.PI/2)},
@@ -143,24 +153,13 @@ class Engine {
                 // If the it's the same object or the collision has already been performed, just ignore.
                 if(i === j || collisionsPerformed.some(collision => {return collision.includes(i) || collision.includes(j)})) continue;
 
-                // Getting the potentional position of the other object.
-                const potentialPosition2 = [
-                    totalObjects[j].getPosition()[0] + (totalObjects[j].getVelocity()[0] * (1000/60)),
-                    totalObjects[j].getPosition()[1] + (totalObjects[j].getVelocity()[1] * (1000/60))
-                ];
-
-                // Triangulating the distance between the two objects.
-                const distance = Math.pow(Math.pow(Math.abs(potentialPosition[0] - potentialPosition2[0]), 2) + Math.pow(Math.abs(potentialPosition[1] - potentialPosition2[1]), 2), 0.5);
-
                 // If the hitboxes overlap, perform the collision.
-                if (distance < (totalObjects[i].getWidth() + totalObjects[j].getWidth()) / 2) {
-                    // Getting perpendical angle of the tangent line for the point of contact on the opposing circle.
-                    const normalAngle = Math.atan2(totalObjects[i].getPosition()[1] - totalObjects[j].getPosition()[1], totalObjects[i].getPosition()[0] - totalObjects[j].getPosition()[0]);
-
+                const normalAngles = totalObjects[i].testHitboxes(totalObjects[j]);
+                if (normalAngles) {
                     // Calling the calc collision function.
                     const collidedVelocities = this.calcCollision(
-                        {mass: totalObjects[i].getMass(), velocityInitial: totalObjects[i].getVelocity(), normalAngle: normalAngle},
-                        {mass: totalObjects[j].getMass(), velocityInitial: totalObjects[j].getVelocity(), normalAngle: normalAngle}
+                        {mass: totalObjects[i].getMass(), velocityInitial: totalObjects[i].getVelocity(), normalAngle: normalAngles[0]},
+                        {mass: totalObjects[j].getMass(), velocityInitial: totalObjects[j].getVelocity(), normalAngle: normalAngles[0]}
                     );
                     
                     // Overwriting each objects velocity.

@@ -1,6 +1,6 @@
 <div class="puck" [ngStyle]="{
     'top.px': rinkDimensions[1] - puck.getPosition()[1],
     'left.px': puck.getPosition()[0],
-    'width.px': puck.getWidth(),
-    'height.px': puck.getWidth()
+    'width.px': puck.getHitboxes()[0].getWidth(),
+    'height.px': puck.getHitboxes()[0].getWidth()
 }"></div>

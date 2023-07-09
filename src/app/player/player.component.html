@@ -5,8 +5,8 @@
 }" [ngStyle]="{
     'top.px': rinkDimensions[1] - player.getPosition()[1],
     'left.px': player.getPosition()[0],
-    'width.px': player.getWidth(),
-    'height.px': player.getWidth()
+    'width.px': player.getHitboxes()[0].getWidth(),
+    'height.px': player.getHitboxes()[0].getWidth()
 }">
     <p>{{index < 4 ? index+1 : ''}}</p>
 </div>

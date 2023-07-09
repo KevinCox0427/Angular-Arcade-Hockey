@@ -1,5 +1,6 @@
 import { Component, HostListener, OnInit } from '@angular/core';
 import { timer } from 'rxjs';
+import CircularHitbox from 'src/engine/CircularHitbox';
 import Engine from 'src/engine/Engine';
 import Player from 'src/engine/Player';
 import Puck from 'src/engine/Puck';
@@ -34,7 +35,7 @@ export class AppComponent implements OnInit {
     return new Player({
       position: [100 + (250 * i), 800 - (Math.random()*600)],
       mass: randomSize,
-      width: randomSize*2
+      hitboxes: [new CircularHitbox(randomSize*2, [0, 0])]
     });
   }));
   // The index of the player that is currently being controlled.
