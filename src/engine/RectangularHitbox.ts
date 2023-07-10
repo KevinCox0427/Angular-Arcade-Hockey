@@ -46,7 +46,7 @@ class RectangularHitbox {
         return this.rotation;
     }
     
-    public testCollision(objectA: MoveableObject, objectB: MoveableObject, hitboxB: CircularHitbox | RectangularHitbox) {
+    public testCollision(hitboxB: CircularHitbox | RectangularHitbox, objectA: [number, number], objectB: [number, number]): [number, number] | false {
         return false;
     }
 }

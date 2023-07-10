@@ -125,7 +125,32 @@ class MoveableObject {
         this.hitboxes[i] = hitbox;
     }
 
+    /**
+     * A function to test whether a collision will occur next frame between two specified objects.
+     * @param otherObject The other object being tested for.
+     * @returns If a collision occurs, this returns the surface angles at the point of contact for each object. Otherwise returns false.
+     */
     public testHitboxes(otherObject: MoveableObject): [number, number] | false {
+        // Getting the positions of the next frame to test for collisions
+        const potentialPosition1: [number, number] = [
+            this.getPosition()[0] + (this.getVelocity()[0] * (1000/60)),
+            this.getPosition()[1] + (this.getVelocity()[1] * (1000/60))
+        ];
+        const potentialPosition2: [number, number] = [
+            otherObject.getPosition()[0] + (otherObject.getVelocity()[0] * (1000/60)),
+            otherObject.getPosition()[1] + (otherObject.getVelocity()[1] * (1000/60))
+        ];
+
+        const hitboxes1 = this.getHitboxes();
+        const hitboxes2 = otherObject.getHitboxes();
+
+        for(let i = 0; i < hitboxes1.length; i++) {
+            for(let j = 0; j < hitboxes2.length; j++) {
+                const result = hitboxes1[i].testCollision(hitboxes2[j], potentialPosition1, potentialPosition2);
+                if(result) return result;
+            }
+        }
+
         return false;
     }
 }

@@ -15,8 +15,9 @@ describe("Testing the SAT collision detection between a circle and angled rectan
         mass: 20,
         hitboxes: [new RectangularHitbox(20, 30, [0,0], 60)]
     });
+
     // A collision test for the circle and rectangle 1.
-    const collisionResult = circle1.getHitboxes()[0].testCollision(circle1, angledRectangle1, angledRectangle1.getHitboxes()[0]);
+    const collisionResult = circle1.getHitboxes()[0].testCollision(angledRectangle1.getHitboxes()[0], circle1.getPosition(), angledRectangle1.getPosition());
 
     it("A collision should fire if they're overlapping.", () => {
         expect(Array.isArray(collisionResult)).toEqual(true);
@@ -40,8 +41,9 @@ describe("Testing the SAT collision detection between a circle and angled rectan
         mass: 20,
         hitboxes: [new RectangularHitbox(20, 30, [0,0], -60)]
     });
+
     // A collision test for the circle and rectangle 1.
-    const collisionResult2 = circle2.getHitboxes()[0].testCollision(circle2, angledRectangle2, angledRectangle2.getHitboxes()[0]);
+    const collisionResult2 = circle2.getHitboxes()[0].testCollision(angledRectangle2.getHitboxes()[0], circle2.getPosition(), angledRectangle2.getPosition());
 
     it("A collision should return a normalized tangent angle for the circle and a normalized surface angle for the rectangle's edge if they collide on a rectangle's edge.", () => {
         expect(((collisionResult2 as [number, number])[0])).toEqual(Math.PI/4);
@@ -57,11 +59,9 @@ describe("Testing the SAT collision detection between a circle and angled rectan
         hitboxes: [new RectangularHitbox(20, 30, [0,0], 45)]
     });
     // A collision test for the circle and rectangle 2.
-    const collisionResult3 = circle1.getHitboxes()[0].testCollision(circle1, angledRectangle3, angledRectangle3.getHitboxes()[0]);
+    const collisionResult3 = circle1.getHitboxes()[0].testCollision(angledRectangle3.getHitboxes()[0], circle1.getPosition(), angledRectangle3.getPosition());
 
     it("A collision shouldn't fire if they're not touching.", () => {
         expect(collisionResult3).toEqual(false);
     });
-
-
 });
