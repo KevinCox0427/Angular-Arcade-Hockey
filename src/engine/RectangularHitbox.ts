@@ -1,5 +1,4 @@
 import CircularHitbox from "./CircularHitbox";
-import MoveableObject from "./MoveableObject";
 
 class RectangularHitbox {
     private width: number;
@@ -11,7 +10,7 @@ class RectangularHitbox {
         this.width = width;
         this.height = height;
         this.distanceFromCenter = distanceFromCenter;
-        this.rotation = rotation;
+        this.rotation = rotation * (Math.PI / 180);
     }
 
     /**

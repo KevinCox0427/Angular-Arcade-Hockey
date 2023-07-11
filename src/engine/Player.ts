@@ -1,7 +1,7 @@
 import MoveableObject from "./MoveableObject";
 
 /**
- * An extended Moveable Object class that can take user inputs and apply it as a force.
+ * A class representing a player that can take user inputs and apply it as a force.
  */
 class Player extends MoveableObject {
     /**

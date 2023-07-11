@@ -1,5 +1,4 @@
 import CircularHitbox from "./CircularHitbox";
-import Engine from "./Engine";
 import RectangularHitbox from "./RectangularHitbox";
 
 /**
